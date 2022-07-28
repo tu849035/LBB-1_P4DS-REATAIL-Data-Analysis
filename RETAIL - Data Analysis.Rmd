@@ -1,0 +1,173 @@
+---
+title: "RETAIL - Data Analysis"
+author: "Tubagus Fathul Arifin"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+     toc: true
+     toc_depth: 5
+     toc_float: true
+     theme: readable
+     highlight: breezedark
+     df_print: paged
+     
+---
+
+```{r echo=FALSE, out.width="100%"}
+knitr::include_graphics("assets/retail-banner.png")
+```
+```{r setup, include=FALSE}
+
+library(ggplot2)
+```
+
+# **1. DATA INTRODUCTION**
+
+On this occasion we will conduct simple exploratory data analysis of a sales data in a retail company.
+
+The buyers are coming from different segment such as Corporate, Home Office until individual consumer. This company also could provide the best option for your delivery which suitable with your needs.
+
+
+
+# **2. DATA PREPARATION**
+
+Input the data and store it in a variable named Retail.
+```{r}
+Retail <- read.csv("data_input/retail.csv")
+```
+And now we can do data inspection and cleansing.
+
+## **2.1. Data Inspection**
+
+Check if the saved data is correct.
+```{r}
+head(Retail)
+```
+Inspect the data.
+```{r}
+str(Retail)
+```
+```{r}
+dim(Retail)
+```
+```{r}
+names(Retail)
+```
+      
+**From our inspection we can conclude** :   
+  * Retail data contain 9994 of rows and 15 of coloumns.  
+  * Each of column name :  
+    01. “Row.ID”,  
+    02. “Order.ID”,  
+    03. “Order.Date”,  
+    04. “Ship.Date”,  
+    05. “Ship.Mode”,  
+    06. “Customer.ID”,  
+    07. “Segment”,  
+    08. “Product.ID”,  
+    09. “Category”,  
+    10. “Sub.Category”,  
+    11. “Product.Name”,  
+    12. “Sales”,  
+    13. “Quantity”,  
+    14. “Discount”,
+    15. “Profit”.  
+
+## **2.2. Data Clenasing & Coertions**
+From the ***str()*** result, we find some of data type not in the corect type. we need to convert it into corect type (data coertion).
+```{r}
+Retail$Row.ID <- as.character(Retail$Row.ID)
+Retail$Order.Date<- as.Date(Retail$Order.Date, "%m/%d/%y")
+Retail$Ship.Date <- as.Date(Retail$Ship.Date, "%m/%d/%y")
+Retail$Ship.Mode <- as.factor(Retail$Ship.Mode)
+Retail$Customer.ID<-as.character(Retail$Customer.ID)
+Retail$Segment <- as.factor(Retail$Segment)
+Retail$Product.ID<- as.character(Retail$Product.ID)
+Retail$Category <- as.factor(Retail$Category    )
+Retail$Sub.Category<-as.factor(Retail$Sub.Category)
+Retail$Product.Name<-as.factor(Retail$Product.Name)
+str(Retail)
+```
+Each of column already changed into desired data type
+
+Now, we have to check for the missing value in the data.
+```{r}
+colSums(is.na(Retail))
+```
+```{r}
+anyNA(Retail)
+```
+From the result above, now we know that there are no missing value in the *Retail* data.
+
+We will do subsetting to delete some column (1&2 because we dont need the informations). then save it into *Retail_new* variable
+```{r}
+Retail_new <- Retail[,c(3:15)]
+head(Retail_new)
+```
+
+
+# **3. DATA EXPLORATION & VISUALIZATION**
+
+We will see a brief information from *Retail_new* data.
+
+```{r}
+summary(Retail_new)
+```
+    
+**Summary :**  
+1. First order occured in Jan 2014.  
+2. Standart Class was the most popular one for shipping option and Same day delivery was the lowest one.  
+3. The most buyers coming from consumer segment and home office segment was the lowest.  
+4. Office Supply category was the best seller compare to others.  
+5. In Sub category, other stuff was the most favourite one then followed by Binders and paper. Art is the lowest.  
+6. The average sales at 229.858; with max sales value at 22638.480 and minumum sales value at 0.444  
+7. Max quantity order was 14 within 4 years but average at 3.79.  
+8. Max amount of discount was 80%, but mean number of discount around 15%.  
+9. The ever had loss at 6599 and gained 8399 as their highest profit with average profit at 28.657.  
+
+
+Talking about "sales" then surely we will talking about "profit".  
+So next we will do some aggregation using the *Profit* variable as the main reference with several other variables that are very related.  
+These variables include *Category*, *Sub.category*, & *Product.Name*.  
+Therefore we will do subsetting so that the data that appears is only data from these variables.
+```{r}
+Retail_Profit <- Retail_new[ ,c("Category", "Sub.Category", "Product.Name", "Profit")]
+```
+
+And now we can carry out the above-mentioned aggression process along with visualizing the data.
+
+## **3.1. Profit ~ Category **
+```{r}
+Retail_Profit_Category <- aggregate(Profit~Category,Retail_Profit,mean)
+```
+```{r}
+ggplot(data = Retail_Profit_Category, mapping = aes(x=Profit, y=Category )) +
+  geom_col()
+```
+
+## **3.2. Profit ~ Sub.Category **
+```{r}
+Retail_Profit_Sub.Category <- aggregate(Profit~Sub.Category,Retail_Profit,mean)
+```
+```{r}
+ggplot(data = Retail_Profit_Sub.Category, mapping = aes(x=  Profit, y= Sub.Category )) +
+  geom_col()
+```
+
+## **3.3. Profit ~ Product.Name **
+```{r}
+Retail_Profit_Product.Name <- aggregate(Profit~Product.Name,Retail_Profit,mean)
+head(Retail_Profit_Product.Name[order(Retail_Profit_Product.Name$Profit, decreasing=T), ],5)
+tail(Retail_Profit_Product.Name[order(Retail_Profit_Product.Name$Profit, decreasing=T), ],5)
+```
+
+
+# **4. DATA ANALYSIS**
+
+Based on the exploration of the data above, we can perform the following analysis:  
+**1.** The "technology" category is the category that generates the highest profit. And the furniture category is the one with the lowest profit among the three categories.  
+  *Suggestion* : Prioritize adding product promotions to the furniture category but still maintaining the ongoing promotions for the other two categories.  
+**2.** In the sub-category for the type of "copier" product, it gets profit far above other sub-categories. Meanwhile, other sub-categories such as tables, supplies, & bookcases experienced losses.  
+  *Suggestion* : Prioritize adding more product promotions to the other sub-category other than "copier" but still maintaining the ongoing promotions for the other two categories. And provide massive discounts for sales of sub-categories of products experiencing losses.  
+**3.** "Canon imageCLASS 2200 Advanced Copier" is a product that produces the highest profit among other products. However, there are some products as well that cause loss.  
+  *Suggestion* : provide massive discounts for sales of products experiencing losses to minimize losses.  
